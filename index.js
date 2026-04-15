@@ -57,9 +57,8 @@ app.post('/generate', async (req, res) => {
         messages: [{ role: 'user', content: prompt }]
       })
     });
-    const text = await r.text();
-    res.setHeader('Content-Type', 'application/json');
-    res.send(text);
+    const data = await r.json();
+    res.json(data);
   } catch(e) {
     res.status(500).json({ error: e.message });
   }
