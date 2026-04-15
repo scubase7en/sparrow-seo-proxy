@@ -53,10 +53,10 @@ SKU: ${req.body.sku}
 Guidelines:
 - Description: 2-3 punchy paragraphs. Lead with the biggest benefit. Use power words that drive urgency and confidence (professional-grade, commercial-quality, built to last, trusted by chefs). Include natural high-volume keywords. End with a subtle call to action.
 - Page title: Include the primary keyword + brand benefit. Under 60 characters.
-- Meta description: Highlight a key benefit, include a strong call to action like "Shop now" or "Order today". Under 155 characters.
-- Keywords: Mix of high-volume broad terms AND specific long-tail keywords that buyers actually search for.
+- Meta description: Highlight a key benefit with a strong call to action like "Shop now" or "Order today". Under 155 characters.
+- Search keywords: Provide TWO tiers separated by a pipe | symbol. First tier: 4-5 broad high-volume keywords that capture maximum traffic. Second tier: 4-5 specific long-tail buyer-intent phrases that convert best (e.g. "commercial 8 quart chafer set for catering"). Format: "broad1, broad2, broad3, broad4 | long-tail1, long-tail2, long-tail3, long-tail4"
 
-Return exactly: {"description":"optimized description text","page_title":"optimized page title","meta_description":"optimized meta description","search_keywords":"optimized keywords"}`;
+Return exactly: {"description":"optimized description","page_title":"optimized page title","meta_description":"optimized meta description","search_keywords":"broad keywords | long-tail keywords"}`;
 
     const r = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
