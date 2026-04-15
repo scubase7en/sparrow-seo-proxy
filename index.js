@@ -10,7 +10,7 @@ app.use(express.static(path.join(__dirname)));
 
 const STORE_HASH = 'prsxnxsly0';
 const ACCESS_TOKEN = 'nzv1vxafw5v1xu3bvwfzhlzw8zt4ero';
-const ANTHROPIC_KEY = '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';
+const ANTHROPIC_KEY = process.env.ANTHROPIC_KEY;
 const BC_BASE = `https://api.bigcommerce.com/stores/${STORE_HASH}/v3`;
 const BC_HEADERS = {
   'X-Auth-Token': ACCESS_TOKEN,
