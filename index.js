@@ -8,6 +8,7 @@ app.use(express.json());
 
 const STORE_HASH = 'prsxnxsly0';
 const ACCESS_TOKEN = 'nzv1vxafw5v1xu3bvwfzhlzw8zt4ero';
+const ANTHROPIC_KEY = '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';
 const BC_BASE = `https://api.bigcommerce.com/stores/${STORE_HASH}/v3`;
 const BC_HEADERS = {
   'X-Auth-Token': ACCESS_TOKEN,
@@ -33,7 +34,11 @@ app.put('/products/:id', async (req, res) => {
 app.post('/generate', async (req, res) => {
   const r = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': ANTHROPIC_KEY,
+      'anthropic-version': '2023-06-01'
+    },
     body: JSON.stringify(req.body)
   });
   const data = await r.json();
