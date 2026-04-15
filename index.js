@@ -43,7 +43,21 @@ app.put('/products/:id', async (req, res) => {
 
 app.post('/generate', async (req, res) => {
   try {
-    const prompt = `You are an SEO expert for Sparrow Food Solutions, a restaurant equipment store. Generate SEO content for this product and return ONLY valid JSON with no markdown or backticks. Product: ${req.body.product} SKU: ${req.body.sku}. Return exactly: {"description":"2 paragraphs for food service buyers","page_title":"SEO title under 60 chars","meta_description":"under 155 chars with call to action","search_keywords":"5-6 comma separated keywords"}`;
+    const prompt = `You are an expert ecommerce copywriter and SEO strategist for Sparrow Food Solutions (sparrowfoodsolutions.com), a restaurant equipment and supplies store. Your goal is to maximize organic search traffic AND drive conversions from restaurant owners, bakeries, catering companies, and food service professionals.
+
+Generate high-converting, SEO-optimized content for this product. Return ONLY valid JSON with no markdown or backticks.
+
+Product: ${req.body.product}
+SKU: ${req.body.sku}
+
+Guidelines:
+- Description: 2-3 punchy paragraphs. Lead with the biggest benefit. Use power words that drive urgency and confidence (professional-grade, commercial-quality, built to last, trusted by chefs). Include natural high-volume keywords. End with a subtle call to action.
+- Page title: Include the primary keyword + brand benefit. Under 60 characters.
+- Meta description: Highlight a key benefit, include a strong call to action like "Shop now" or "Order today". Under 155 characters.
+- Keywords: Mix of high-volume broad terms AND specific long-tail keywords that buyers actually search for.
+
+Return exactly: {"description":"optimized description text","page_title":"optimized page title","meta_description":"optimized meta description","search_keywords":"optimized keywords"}`;
+
     const r = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -53,7 +67,7 @@ app.post('/generate', async (req, res) => {
       },
       body: JSON.stringify({
         model: 'claude-haiku-4-5-20251001',
-        max_tokens: 600,
+        max_tokens: 800,
         messages: [{ role: 'user', content: prompt }]
       })
     });
