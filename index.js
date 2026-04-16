@@ -41,6 +41,17 @@ app.get('/products/:id/variants', async (req, res) => {
   }
 });
 
+app.get('/products/:id/custom-fields', async (req, res) => {
+  try {
+    const url = `${BC_BASE}/catalog/products/${req.params.id}/custom-fields`;
+    const r = await fetch(url, { headers: BC_HEADERS });
+    const data = await r.json();
+    res.json(data);
+  } catch(e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 app.put('/products/:id', async (req, res) => {
   try {
     const url = `${BC_BASE}/catalog/products/${req.params.id}`;
@@ -55,23 +66,31 @@ app.put('/products/:id', async (req, res) => {
 app.post('/generate', async (req, res) => {
   try {
     const variants = req.body.variants && req.body.variants.length > 0 ? req.body.variants.join(', ') : '';
-    const specs = req.body.specs;
+    const specs = req.body.specs || {};
+    const customFields = req.body.customFields || [];
+
+    const customFieldsText = customFields.length > 0
+      ? customFields.map(f => `${f.name}: ${f.value}`).join('\n')
+      : '';
 
     const prompt = `You are an SEO copywriter for Sparrow Food Solutions, a restaurant equipment store. Generate content for this product and return ONLY a JSON object with no markdown.
 
 Product: ${req.body.product}
 SKU: ${req.body.sku}
 ${variants ? 'Variants: ' + variants : ''}
-${specs && specs.weight ? 'Weight: ' + specs.weight + ' lbs' : ''}
-${specs && specs.width ? 'Dimensions: ' + specs.width + 'W x ' + specs.depth + 'D x ' + specs.height + 'H' : ''}
+${specs.weight ? 'Weight: ' + specs.weight + ' lbs' : ''}
+${specs.width ? 'Dimensions: ' + specs.width + '"W x ' + specs.depth + '"D x ' + specs.height + '"H' : ''}
+${customFieldsText}
 
-Return this JSON with these exact keys:
+Return this JSON:
 {
-  "description": "<h2>Product headline</h2><p>Benefit-focused paragraph for food service pros. Use power words.</p><p>Second paragraph about features and use cases.</p><h3>Key Features</h3><ul><li><strong>Feature 1:</strong> Description</li><li><strong>Feature 2:</strong> Description</li><li><strong>Feature 3:</strong> Description</li><li><strong>Feature 4:</strong> Description</li></ul><h3>Ideal For</h3><ul><li>Restaurants</li><li>Catering operations</li><li>Food service professionals</li></ul>",
+  "description": "<h2>Catchy headline with main keyword</h2><p>Benefit-focused paragraph for food service pros with power words.</p><p>Second paragraph about features, use cases, and why they should buy now.</p><h3>Key Features</h3><ul><li><strong>Feature 1:</strong> Description</li><li><strong>Feature 2:</strong> Description</li><li><strong>Feature 3:</strong> Description</li><li><strong>Feature 4:</strong> Description</li><li><strong>Feature 5:</strong> Description</li></ul>${customFieldsText ? '<h3>Product Specifications</h3><table border=1 cellpadding=4 cellspacing=0 width=100%><tr><td>Model</td><td>${req.body.sku}</td></tr>SPECS_ROWS</table>' : ''}<h3>Ideal For</h3><ul><li>Restaurants</li><li>Catering operations</li><li>Cafeterias and food courts</li><li>Hotel banquet services</li></ul><p><strong>Why It Works:</strong> Closing sentence tying together key benefits.</p>",
   "page_title": "Under 60 char SEO title",
   "meta_description": "Under 155 char meta with call to action",
   "search_keywords": "broad1, broad2, broad3 | long-tail1, long-tail2, long-tail3"
-}`;
+}
+
+Replace SPECS_ROWS with actual table rows for each spec provided. Keep description under 800 words total.`;
 
     const r = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
