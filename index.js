@@ -54,38 +54,24 @@ app.put('/products/:id', async (req, res) => {
 
 app.post('/generate', async (req, res) => {
   try {
-    const variantsText = req.body.variants && req.body.variants.length > 0
-      ? `Available variants/sizes: ${req.body.variants.join(', ')}`
-      : 'No variants — single product';
+    const variants = req.body.variants && req.body.variants.length > 0 ? req.body.variants.join(', ') : '';
+    const specs = req.body.specs;
 
-    const specsText = req.body.specs
-      ? `Product specs from store: Weight: ${req.body.specs.weight || 'N/A'} lbs, Dimensions: ${req.body.specs.width || 'N/A'}"W x ${req.body.specs.depth || 'N/A'}"D x ${req.body.specs.height || 'N/A'}"H`
-      : '';
-
-    const prompt = `You are an expert ecommerce copywriter and SEO strategist for Sparrow Food Solutions (sparrowfoodsolutions.com), a restaurant equipment and supplies store. Your goal is to maximize organic search traffic AND drive conversions from restaurant owners, bakeries, catering companies, and food service professionals.
-
-Generate a DETAILED, high-converting, SEO-optimized product description in the style of a professional restaurant equipment retailer. Return ONLY valid JSON with no markdown or backticks.
+    const prompt = `You are an SEO copywriter for Sparrow Food Solutions, a restaurant equipment store. Generate content for this product and return ONLY a JSON object with no markdown.
 
 Product: ${req.body.product}
 SKU: ${req.body.sku}
-${variantsText}
-${specsText}
+${variants ? 'Variants: ' + variants : ''}
+${specs && specs.weight ? 'Weight: ' + specs.weight + ' lbs' : ''}
+${specs && specs.width ? 'Dimensions: ' + specs.width + 'W x ' + specs.depth + 'D x ' + specs.height + 'H' : ''}
 
-Generate a rich product description with ALL of these sections formatted as HTML:
-
-1. Opening headline (h2) with main keyword
-2. 2-3 persuasive paragraphs highlighting benefits, use cases, and why food service pros should buy it. Use power words. Naturally include keywords.
-3. Key Features section (h3) with 5-6 bullet points (strong tag for feature name, then description)
-4. Product Specifications table (h3) using an HTML table with alternating rows. Include any specs provided plus model/SKU. If variants exist list them.
-5. Ideal For section (h3) with bullet points listing the types of operations this suits
-6. A closing Why It Works paragraph that ties together the key selling points
-
-For SEO fields:
-- Page title: Primary keyword + key benefit, under 60 chars
-- Meta description: Key benefit + strong call to action, under 155 chars  
-- Search keywords: TWO tiers: "broad1, broad2, broad3, broad4 | long-tail1, long-tail2, long-tail3, long-tail4"
-
-Return exactly: {"description":"full HTML description","page_title":"page title","meta_description":"meta description","search_keywords":"broad | long-tail"}`;
+Return this JSON with these exact keys:
+{
+  "description": "<h2>Product headline</h2><p>Benefit-focused paragraph for food service pros. Use power words.</p><p>Second paragraph about features and use cases.</p><h3>Key Features</h3><ul><li><strong>Feature 1:</strong> Description</li><li><strong>Feature 2:</strong> Description</li><li><strong>Feature 3:</strong> Description</li><li><strong>Feature 4:</strong> Description</li></ul><h3>Ideal For</h3><ul><li>Restaurants</li><li>Catering operations</li><li>Food service professionals</li></ul>",
+  "page_title": "Under 60 char SEO title",
+  "meta_description": "Under 155 char meta with call to action",
+  "search_keywords": "broad1, broad2, broad3 | long-tail1, long-tail2, long-tail3"
+}`;
 
     const r = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -95,8 +81,8 @@ Return exactly: {"description":"full HTML description","page_title":"page title"
         'anthropic-version': '2023-06-01'
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 800,
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 1000,
         messages: [{ role: 'user', content: prompt }]
       })
     });
