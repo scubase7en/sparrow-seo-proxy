@@ -48,7 +48,7 @@ textarea{resize:vertical;line-height:1.6}
 </head>
 <body>
 <div class="wrap">
-<div class="hdr"><div class="logo">🐦</div><div><h1>Sparrow Food Solutions — SEO Tool</h1><div class="sub">Connected to BigCommerce · Rich descriptions · Variants auto-detected</div></div></div>
+<div class="hdr"><div class="logo">🐦</div><div><h1>Sparrow Food Solutions — SEO Tool</h1><div class="sub">Connected to BigCommerce · Rich descriptions · Variants &amp; specs auto-detected</div></div></div>
 <div class="card" id="S">
 <label>Search by product name or SKU</label>
 <div class="row"><input type="text" id="si" placeholder="e.g. CR-3032, fryer, cake pan..."/><button class="btn blue" id="sb">Search</button></div>
@@ -83,7 +83,7 @@ textarea{resize:vertical;line-height:1.6}
 </div>
 <script>
 var PR='https://sparrow-seo-proxy.onrender.com';
-var cp=null,cv=[],cs={};
+var cp=null,cv=[],cs={},cf=[];
 
 document.getElementById('sb').onclick=function(){
   var q=document.getElementById('si').value.trim();
@@ -113,7 +113,7 @@ document.getElementById('sb').onclick=function(){
 document.getElementById('si').addEventListener('keydown',function(e){if(e.key==='Enter')document.getElementById('sb').click();});
 
 function loadProduct(p){
-  cp=p;cv=[];cs={weight:p.weight,width:p.width,depth:p.depth,height:p.height};
+  cp=p;cv=[];cs={weight:p.weight,width:p.width,depth:p.depth,height:p.height};cf=[];
   document.getElementById('S').style.display='none';document.getElementById('E').style.display='block';
   document.getElementById('fd').value=(p.description||'').replace(/<[^>]*>/g,'').trim();
   document.getElementById('ft').value=p.page_title||'';
@@ -122,13 +122,12 @@ function loadProduct(p){
   updateCount('ft','ct',60);updateCount('fm','cm',160);
   document.getElementById('ob').style.display='none';document.getElementById('am').textContent='';
   showTab('c');
-  document.getElementById('pi').innerHTML='<div class="pc"><div class="pn">'+p.name+'</div><div class="ps">SKU: '+(p.sku||'N/A')+' | ID: '+p.id+'</div><div id="vtags" style="margin-top:6px"><span class="spin"></span> Loading variants...</div></div>';
+  document.getElementById('pi').innerHTML='<div class="pc"><div class="pn">'+p.name+'</div><div class="ps">SKU: '+(p.sku||'N/A')+' | ID: '+p.id+(p.weight?' | '+p.weight+' lbs':'')+'</div><div id="vtags" style="margin-top:6px"><span class="spin"></span> Loading...</div></div>';
   fetch(PR+'/products/'+p.id+'/variants')
     .then(function(r){return r.json();})
     .then(function(d){
       var variants=d.data||[];
-      var vtags=document.getElementById('vtags');
-      if(variants.length<=1){vtags.innerHTML='<span style="font-size:12px;color:#888">Single product</span>';}
+      if(variants.length<=1){document.getElementById('vtags').innerHTML='<span style="font-size:12px;color:#888">Single product</span>';}
       else{
         var labels=[];
         variants.forEach(function(v){
@@ -137,10 +136,14 @@ function loadProduct(p){
             labels.push(label);cv.push(label);
           }
         });
-        vtags.innerHTML=labels.map(function(l){return '<span class="vtag">'+l+'</span>';}).join('');
+        document.getElementById('vtags').innerHTML=labels.map(function(l){return '<span class="vtag">'+l+'</span>';}).join('');
       }
     })
-    .catch(function(){document.getElementById('vtags').innerHTML='<span style="font-size:12px;color:#888">Could not load variants</span>';});
+    .catch(function(){document.getElementById('vtags').innerHTML='<span style="font-size:12px;color:#888">No variants</span>';});
+  fetch(PR+'/products/'+p.id+'/custom-fields')
+    .then(function(r){return r.json();})
+    .then(function(d){cf=d.data||[];})
+    .catch(function(){cf=[];});
 }
   document.getElementById('tab-c').onclick=function(){showTab('c');};
 document.getElementById('tab-p').onclick=function(){showTab('p');};
@@ -171,7 +174,7 @@ document.getElementById('gb').onclick=function(){
   var gb=document.getElementById('gb'),am=document.getElementById('am');
   gb.disabled=true;am.innerHTML='<span class="spin"></span>Generating rich SEO content...';am.className='msg in';
   document.getElementById('ob').style.display='none';
-  fetch(PR+'/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({product:cp.name,sku:cp.sku||'N/A',variants:cv,specs:cs})})
+  fetch(PR+'/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({product:cp.name,sku:cp.sku||'N/A',variants:cv,specs:cs,customFields:cf})})
     .then(function(r){return r.json();})
     .then(function(d){
       var text=(d.content||[]).map(function(b){return b.text||'';}).join('').replace(/```json|```/g,'').trim();
@@ -201,7 +204,7 @@ document.getElementById('svb').onclick=function(){
 };
 
 document.getElementById('bb').onclick=function(){
-  cp=null;cv=[];cs={};
+  cp=null;cv=[];cs={};cf=[];
   document.getElementById('E').style.display='none';document.getElementById('S').style.display='block';
   document.getElementById('pl').innerHTML='';document.getElementById('sm').textContent='';
 };
