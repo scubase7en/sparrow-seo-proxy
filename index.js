@@ -68,29 +68,46 @@ app.post('/generate', async (req, res) => {
     const variants = req.body.variants && req.body.variants.length > 0 ? req.body.variants.join(', ') : '';
     const specs = req.body.specs || {};
     const customFields = req.body.customFields || [];
+    const customFieldsText = customFields.length > 0 ? customFields.map(f => `${f.name}: ${f.value}`).join('\n') : '';
 
-    const customFieldsText = customFields.length > 0
-      ? customFields.map(f => `${f.name}: ${f.value}`).join('\n')
-      : '';
+    const specsRows = [
+      `<tr><td><strong>Model</strong></td><td>${req.body.sku}</td></tr>`,
+      specs.weight ? `<tr><td><strong>Weight</strong></td><td>${specs.weight} lbs</td></tr>` : '',
+      specs.width ? `<tr><td><strong>Dimensions</strong></td><td>${specs.width}"W x ${specs.depth}"D x ${specs.height}"H</td></tr>` : '',
+      customFields.map(f => `<tr><td><strong>${f.name}</strong></td><td>${f.value}</td></tr>`).join('')
+    ].filter(Boolean).join('');
 
-    const prompt = `You are an SEO copywriter for Sparrow Food Solutions, a restaurant equipment store. Generate content for this product and return ONLY a JSON object with no markdown.
+    const variantsTable = variants ? `<h3>Available Options</h3><ul>${req.body.variants.map(v => `<li>${v}</li>`).join('')}</ul>` : '';
+
+    const prompt = `You are an expert SEO copywriter for Sparrow Food Solutions (sparrowfoodsolutions.com), a restaurant equipment and supplies store. You write balanced SEO + conversion copy that helps customers find the site AND buy.
+
+Generate a complete, rich product page in HTML. Return ONLY valid JSON with no markdown or backticks.
 
 Product: ${req.body.product}
 SKU: ${req.body.sku}
-${variants ? 'Variants: ' + variants : ''}
+${variants ? 'Available variants: ' + variants : ''}
 ${specs.weight ? 'Weight: ' + specs.weight + ' lbs' : ''}
 ${specs.width ? 'Dimensions: ' + specs.width + '"W x ' + specs.depth + '"D x ' + specs.height + '"H' : ''}
 ${customFieldsText}
 
-Return this JSON:
-{
-  "description": "<h2>Catchy headline with main keyword</h2><p>Benefit-focused paragraph for food service pros with power words.</p><p>Second paragraph about features, use cases, and why they should buy now.</p><h3>Key Features</h3><ul><li><strong>Feature 1:</strong> Description</li><li><strong>Feature 2:</strong> Description</li><li><strong>Feature 3:</strong> Description</li><li><strong>Feature 4:</strong> Description</li><li><strong>Feature 5:</strong> Description</li></ul>${customFieldsText ? '<h3>Product Specifications</h3><table border=1 cellpadding=4 cellspacing=0 width=100%><tr><td>Model</td><td>${req.body.sku}</td></tr>SPECS_ROWS</table>' : ''}<h3>Ideal For</h3><ul><li>Restaurants</li><li>Catering operations</li><li>Cafeterias and food courts</li><li>Hotel banquet services</li></ul><p><strong>Why It Works:</strong> Closing sentence tying together key benefits.</p>",
-  "page_title": "Under 60 char SEO title",
-  "meta_description": "Under 155 char meta with call to action",
-  "search_keywords": "broad1, broad2, broad3 | long-tail1, long-tail2, long-tail3"
-}
+Write the description as HTML with this EXACT structure:
+1. <h2> - Compelling headline with primary keyword (mention origin like "Made in Korea" if relevant)
+2. <p> - Opening paragraph: what it is, who it's for, why food service pros should buy it. Benefit-driven, not just specs. Include natural keywords.
+3. <p> - Second paragraph: features, use cases, how it improves kitchen operations. Varied language.
+4. <h3>Key Features</h3><ul> - 5-6 bullet points. Each: <li><strong>Feature Name:</strong> benefit-focused description</li>
+5. <h3>Product Specifications</h3><table border="1" cellpadding="6" cellspacing="0" width="100%" style="border-collapse:collapse"> - Include all specs provided plus model/SKU. Use <tr><td> rows.
+6. ${variantsTable ? '<h3>Available Options</h3> - List all variants' : ''}
+7. <h3>Ideal For</h3><ul> - 5-6 bullet points listing types of operations
+8. <p><strong>Why It Works:</strong> - Closing sentence tying together key selling points
 
-Replace SPECS_ROWS with actual table rows for each spec provided. Keep description under 800 words total.`;
+IMPORTANT: Keep total HTML under 900 characters of actual text content. Be concise but complete.
+
+Also provide:
+- page_title: model number + product type + key benefit, under 60 chars
+- meta_description: key benefit + strong CTA like "Shop now" or "Order today", under 155 chars
+- search_keywords: "broad1, broad2, broad3, broad4 | long-tail1, long-tail2, long-tail3, long-tail4" (tiered: broad high-volume | specific buyer-intent)
+
+Return exactly: {"description":"full HTML","page_title":"title","meta_description":"meta","search_keywords":"broad | long-tail"}`;
 
     const r = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
